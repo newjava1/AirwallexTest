@@ -1,0 +1,207 @@
+package com.byron.algorithm;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Scanner;
+import java.util.Stack;
+
+public class AirwallexTest {
+	public static void main(String[] args) {
+		Stack<String> stack = new Stack<String>();
+		
+		@SuppressWarnings("resource")
+		Scanner sc = new Scanner(System.in);
+		
+		List<String> operators = Arrays.asList("+", "-", "*", "/");
+		
+		// list for store previous data
+		List<String> pre1 = new ArrayList<String>();
+		List<String> pre2 = new ArrayList<String>();
+		
+		boolean preUndo = false;
+		while (true) {
+			
+			String data = sc.nextLine();
+			
+			String[] arr = data.split(" ");
+			
+			
+			
+			// insert stack
+			int errIdx = -1;
+			for (int i = 0; i < arr.length; i++) {
+				String d = arr[i];
+				
+				
+				if (operators.contains(d)) {
+					initPre(stack, pre1, pre2);
+					
+					BigDecimal s1 = getBigDecimalData(stack);
+					BigDecimal s2 = getBigDecimalData(stack);
+					if (null == s1 || null == s2) {
+						System.out.println("operator " + d + " (position: " + i + "): insufficient parameters");
+						errIdx = i;
+						if (null != s2) {
+							stack.push(String.valueOf(s2));
+						}
+						if (null != s1) {
+							stack.push(String.valueOf(s1));
+						}
+						break;
+					}
+					
+					if (d.equals("+")) {
+						// double result = s1 + s2;
+						BigDecimal result = s1.add(s2);
+						stack.push(String.valueOf(result));
+					} else if (d.equals("-")) {
+						// double result = s2 - s1;
+						BigDecimal result = s2.subtract(s1);
+						stack.push(String.valueOf(result));
+					} else if (d.equals("*")) {
+						// double result = s2 * s1;
+						BigDecimal result = s1.multiply(s2);
+						stack.push(String.valueOf(result));
+					} else if (d.equals("/")) {
+						// double result = s2 / s1;
+						BigDecimal result = s2.divide(s1);
+						stack.push(String.valueOf(result));
+					}
+				} else if (d.equals("sqrt")) {
+					BigDecimal s1 = getBigDecimalData(stack);
+					if (null == s1) {
+						System.out.println("operator " + d + " (position: " + i + "): insufficient parameters");
+						errIdx = i;
+						break;
+					}
+					double result = Math.sqrt(s1.doubleValue());
+					if (result == (long) result) {
+						stack.push(String.valueOf((long) result));
+					} else {
+						stack.push(String.valueOf(result));
+					}
+					
+				} else if (d.equals("undo")) {
+					if (!preUndo) {
+						preUndo = true;
+						// restore from pre1
+						stack.clear();
+						for (String pre1Data : pre1) {
+							stack.add(pre1Data);
+						}
+					} else {
+						preUndo = false;
+						stack.clear();
+						for (String pre2Data : pre2) {
+							stack.add(pre2Data);
+						}
+					}
+					
+				} else if (d.equals("clear")) {
+					stack.clear();
+				} else {
+					try {
+						BigDecimal dd = new BigDecimal(d);
+						initPre(stack, pre1, pre2);
+						stack.push(d);
+					} catch (Exception e) {
+						break;
+					}
+					
+				}
+				
+			}
+			
+			// read stack
+			int len = stack.size();
+			System.out.print("stack:");
+			boolean printLn = true;
+			for (int i = 0; i < len; i++) {
+				
+				
+				printLn = false;
+				if (i == len - 1) {
+					System.out.println(getElement(stack, i));
+				} else {
+					System.out.print(getElement(stack, i) + " ");
+				}
+			}
+			if (printLn) {
+				System.out.println();
+			}
+			// print errs if necessary
+			if (errIdx != -1) {
+				String errMsg = "the ";
+				boolean print = false;
+				for (int i = errIdx + 1; i < arr.length; i++) {
+					print = true;
+					if (i == arr.length - 1) {
+						errMsg += arr[(arr.length - 1)];
+					} else {
+						errMsg += arr[i] + ",";
+					}
+				}
+				errMsg += " were not pushed on to the stack due to the previous error";
+				if (print)
+					System.out.println(errMsg);
+			}
+		}
+		
+	}
+	
+	static void initPre(final Stack<String> stack, List<String> pre1, List<String> pre2) {
+		// store stack in pre1
+		pre1.clear();
+		for (String s : stack) {
+			pre1.add(s);
+		}
+		
+		if (!pre1.isEmpty()) {
+			pre2.clear();
+			for (int i = 0; i < pre1.size() - 1; i++) {
+				pre2.add(pre1.get(i));
+			}
+		} 
+	}
+	
+	static String getElement(final Stack<String> stack, int i) {
+		String data = stack.elementAt(i);
+		try {
+			
+			if (data.contains(".")) {
+				BigDecimal bd = new BigDecimal(data);
+				bd = bd.setScale(10, BigDecimal.ROUND_HALF_UP);
+				return bd.toString();
+			}
+		} catch (Exception e) {
+			
+		}
+		
+		return data;
+	}
+	
+	static BigDecimal getBigDecimalData(final Stack<String> stack) {
+		try {
+			String data = stack.pop();
+			BigDecimal bd = new BigDecimal(data);
+			return bd;
+		} catch (Exception e) {
+			
+		}
+		
+		return null;
+	}
+	
+	/*static boolean validData(String data) {
+		try {
+			Double.parseDouble(data);
+			return true;
+		} catch (Exception e) {
+			
+			return false;
+		}
+	}*/
+	
+}
